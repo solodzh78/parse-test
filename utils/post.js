@@ -1,7 +1,7 @@
 //Преобразование объекта в FormData
 function objectToFormData(data) {
   const formData = new FormData();
-  for (key in data) {
+  for (let key in data) {
     formData.set(key, data[key]);
   }
   return formData

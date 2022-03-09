@@ -1,5 +1,5 @@
-import { compareSrtings } from "./utils/functions";
-import { postData } from "./utils/post";
+import { compareSrtings } from "./utils/functions.js";
+import { postData } from "./utils/post.js";
 
 const test = 743;
 const gruppa = '5h';
