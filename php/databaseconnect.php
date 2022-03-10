@@ -1,10 +1,6 @@
 <?php
-
 // Параметры подключения к базе данных SQL
-$servername = "localhost";
-$database = "cg96626_000";
-$username = "root";
-$password = "Ss238433";
+require 'db.php';
 
 // Создаем соединение
 $conn = mysqli_connect($servername, $username, $password, $database);
@@ -31,8 +27,10 @@ $pravila=$_POST['pravila'];
 $correctAnswer=$_POST['correctAnswer'];
 $glava=$_POST['glava'];
 
+$gruppa=$_POST['gruppa'];
+
 // выполняем операции с базой данных
-$query = "INSERT INTO gruppa4l(
+$query = "INSERT INTO ".$gruppa."(
         id, 
         globalId, 
         question, 
