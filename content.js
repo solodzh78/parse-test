@@ -3,7 +3,8 @@ import { postData } from "./utils/post.js";
 import { options } from "./options.js"
 import { makeSelect } from "./utils/makeSelect.js";
 
-async function sendToSQL(mass, gruppa) {
+//Отправка массива билетов в базу данных
+const sendToSQL = async function (mass, gruppa) {
     mass.forEach(elem => {
         postData('./php/databaseconnect.php', {...elem, gruppa})
             .then(data => console.log(data));
@@ -11,44 +12,46 @@ async function sendToSQL(mass, gruppa) {
 }
 
 //Получение правильного ответа
-async function getCorrectAnswer(mass, test) {
-    mass.forEach((elem, index) => {
-        const req = {
-            test: test,
-            quest: elem['question']
-        };
-        postData('./php/getCorrectAnswerRequest.php', req)
-            .then(data => {
-                // const card = mass[index];
-                for (let i = 1; i < 6; i++) {
-                    if (data === elem[`answer${i}`]) {
-                        elem['correctAnswer'] = i;
-                        break;
-                    }
-                }
+const getCorrectAnswer = async function (elem, test, index) {
+    const req = {
+        test: test,
+        quest: elem['question']
+    };
+    const data = await postData('./php/getCorrectAnswerRequest.php', req);
 
-                if (elem['correctAnswer'] === 0) {
-                    console.log('data: ', data);
-                    for (let i = 1; i < 6; i++) {
-                        console.log(`answer${i}: `, elem[`answer${i}`]);
-                        if (compareSrtings(data, elem[`answer${i}`]) < 2) {
-                            elem['correctAnswer'] = i;
-                            break;
-                        }
-                    }
-                }
+    for (let i = 1; i < 6; i++) {
+        if (data === elem[`answer${i}`]) {
+            elem['correctAnswer'] = i;
+            break;
+        }
+    }
 
-                if (elem['correctAnswer'] === 0) {
-                    console.warn(`В вопросе №${index + 1} не найден правильный ответ`)
-                }
-            });
-    })
+    if (elem['correctAnswer'] === 0) {
+        console.log('data: ', data);
+        for (let i = 1; i < 6; i++) {
+            console.log(`answer${i}: `, elem[`answer${i}`]);
+            if (compareSrtings(data, elem[`answer${i}`]) < 2) {
+                elem['correctAnswer'] = i;
+                break;
+            }
+        }
+    }
+
+    if (elem['correctAnswer'] === 0) {
+        console.warn(`В вопросе №${index + 1} не найден правильный ответ`)
+    }
+};
+
+//Добавление правильного ответа
+const addCorrectAnswer = async function (mass, test) {
+    const promises = mass.map(async (elem, index) => getCorrectAnswer(elem, test, index));
+    await Promise.all(promises);
 }
 
 //Заполнение массива
-async function fillArray(content) {
-    const mass = [];
-    let shift = 0;
+const fillArray = function (content) {
+    const mass = [];    //Массив билетов
+    let shift = 0;      //Сдвиг. Увеличивается, если вопрос уже есть в массиве
 
     for (let i = 0; i < content.length; i++) {
         let question = content[i].getElementsByTagName('i')[0].innerText;
@@ -79,7 +82,7 @@ async function fillArray(content) {
 }
 
 //Получение данных с сервера
-async function getContent(data) {
+const getContent = async function (data) {
     return postData('./php/getContent.php', data)
         .then(data => {
             const tempDiv = document.createElement('div');
@@ -91,14 +94,13 @@ async function getContent(data) {
 }
 
 //Запуск при нажатии на кнопку
-async function start() {
+const start = async function () {
     const select = document.getElementById('select').value;
     const dataSet = options[select].param;
     const content = await getContent(dataSet);
-    const mass = await fillArray(content);
-    console.log('mass: ', mass);
-    await getCorrectAnswer(mass, dataSet['test']);
-    await sendToSQL(mass, dataSet['gruppa']);
+    const mass = fillArray(content);
+    await addCorrectAnswer(mass, dataSet['test']);
+    sendToSQL(mass, dataSet['gruppa']);
 }
 
 document.getElementById('inputs').append(makeSelect());

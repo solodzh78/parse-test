@@ -1,5 +1,5 @@
 //Преобразование объекта в FormData
-function objectToFormData(data) {
+const objectToFormData = function (data) {
   const formData = new FormData();
   for (let key in data) {
     formData.set(key, data[key]);
@@ -8,7 +8,8 @@ function objectToFormData(data) {
 }
 
 //Отправка POST запроса
-export async function postData(url = '', data = {}) {
+export const postData = async function (url = '', data = {}) {
+  console.log('data: ', data);
   try {
     const response = await fetch(url, {
       method: 'POST',
