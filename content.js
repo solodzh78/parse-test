@@ -6,6 +6,8 @@ import { makeSelect } from "./utils/makeSelect.js";
 //Отправка массива билетов в базу данных
 const sendToSQL = async function (mass, gruppa) {
     mass.forEach(elem => {
+        // преобразуем массив ответов в строку
+        elem.answers = JSON.stringify(elem.answers);
         postData('./php/databaseconnect.php', {...elem, gruppa})
             .then(data => console.log(data));
     });
@@ -15,23 +17,23 @@ const sendToSQL = async function (mass, gruppa) {
 const getCorrectAnswer = async function (elem, test, index) {
     const req = {
         test: test,
-        quest: elem['question']
+        quest: elem['globalId']
     };
-    const data = await postData('./php/getCorrectAnswerRequest.php', req);
+    const data = await postData('./php/getCorrectAnswerRequest1.php', req);
 
-    for (let i = 1; i < 6; i++) {
-        if (data === elem[`answer${i}`]) {
-            elem['correctAnswer'] = i;
+    for (let i = 0; i < elem['answers'].length; i++) {
+        if (data === elem['answers'][i]) {
+            elem['correctAnswer'] = i + 1;
             break;
         }
     }
 
     if (elem['correctAnswer'] === 0) {
         console.log('data: ', data);
-        for (let i = 1; i < 6; i++) {
-            console.log(`answer${i}: `, elem[`answer${i}`]);
-            if (compareSrtings(data, elem[`answer${i}`]) < 2) {
-                elem['correctAnswer'] = i;
+        for (let i = 0; i < elem['answers'].length; i++) {
+            console.log(`answer${i + 1}: `, elem['answers'][i]);
+            if (compareSrtings(data, elem['answers'][i]) < 2) {
+                elem['correctAnswer'] = i + 1;
                 break;
             }
         }
@@ -46,6 +48,8 @@ const getCorrectAnswer = async function (elem, test, index) {
 const addCorrectAnswer = async function (mass, test) {
     const promises = mass.map(async (elem, index) => getCorrectAnswer(elem, test, index));
     await Promise.all(promises);
+    // const promises = getCorrectAnswer(mass[2], test, 1);
+    // await promises;
 }
 
 //Заполнение массива
@@ -54,28 +58,35 @@ const fillArray = function (content) {
     let shift = 0;      //Сдвиг. Увеличивается, если вопрос уже есть в массиве
 
     for (let i = 0; i < content.length; i++) {
+        //Выделение вопроса из content
         let question = content[i].getElementsByTagName('i')[0].innerText;
-        let globalId = +content[i].querySelector("input[type=hidden]").value;
-
         //Обрезка номера вопроса
-        let from = question.search(" ") + 1;
+        const from = question.search(" ") + 1;
         question = question.substring(from);
+        //Выделение глобального идентификатора из content
+        const globalId = +content[i].querySelector("input[type=hidden]").value;
 
-        if (uniq(question, mass)) {
-            let answers = content[i].getElementsByClassName('custom-control-label f_sm');
-            const qNum = i - shift;             //Номер вопроса
+        if (uniq(question, mass)) { //Если такого вопроса нет массиве билетов
+
+            //Выделение ответов из коллекции content[i]
+            const answersCollection = content[i].getElementsByClassName('custom-control-label f_sm');
+            const answers = [];
+            for (let k = 0; k < answersCollection.length; k++) {
+                answers[k] = answersCollection[k].innerText
+            }
+
+            const qNum = i - shift;             //Индекс вопроса
+            
+            //Запись билета в массив
             mass[qNum] = {
                 id: qNum + 1,                   //Идентификатор
-                globalId: globalId,             //Глобальный идентификатор
-                question: question,             //Вопрос
+                globalId,                       //Глобальный идентификатор
+                question,                       //Вопрос
                 correctAnswer: 0,               //Правильный ответ
                 glava: '',                      //Правила
-            }
+                answers,                        //Массив ответов
+            };
 
-            //Ответы
-            for (let k = 0; k < 5; k++) {
-                mass[qNum][`answer${k + 1}`] = answers[k] ? answers[k].innerText : ''
-            }
         } else shift++
     }
     return mass;
@@ -99,9 +110,18 @@ const start = async function () {
     const dataSet = options[select].param;
     const content = await getContent(dataSet);
     const mass = fillArray(content);
+    console.log('mass: ', mass);
     await addCorrectAnswer(mass, dataSet['test']);
     sendToSQL(mass, dataSet['gruppa']);
 }
 
+const check = function () {
+    postData('./php/get_from_db_with_id.php', { id: '185193', gruppa: 'h5' })
+        .then(data => data.json())
+        .then(card = console.log(data));
+};
+
+document.getElementById('inputs').append(makeSelect());
 document.getElementById('inputs').append(makeSelect());
 document.getElementById('btn').onclick = start;
+document.getElementById('btn-load').onclick = check;

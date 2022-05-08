@@ -3,8 +3,8 @@ export const options = {
         title: 'ЭБ 1260.12 V группа по электробезопасности выше 1000 В',
         param: {
             test: 743,
-            ticketQuantity: 1,
-            gruppa: 'gruppa5h'
+            ticketQuantity: 2,
+            gruppa: 'h5'
         }
     },
     '4h': {

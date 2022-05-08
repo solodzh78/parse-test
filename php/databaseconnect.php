@@ -18,12 +18,7 @@ if (!$conn) {
 $id=$_POST['id'];
 $globalId=$_POST['globalId'];
 $question=$_POST['question'];
-$answer1=$_POST['answer1'];
-$answer2=$_POST['answer2'];
-$answer3=$_POST['answer3'];
-$answer4=$_POST['answer4'];
-$answer5=$_POST['answer5'];
-$pravila=$_POST['pravila'];
+$answers=$_POST['answers'];
 $correctAnswer=$_POST['correctAnswer'];
 $glava=$_POST['glava'];
 
@@ -34,11 +29,7 @@ $query = "INSERT INTO ".$gruppa."(
         id, 
         globalId, 
         question, 
-        answer1, 
-        answer2, 
-        answer3, 
-        answer4, 
-        answer5,
+        answers,
         pravila, 
         correctAnswer, 
         glava
@@ -47,11 +38,7 @@ $query = "INSERT INTO ".$gruppa."(
         '$id', 
         '$globalId', 
         '$question', 
-        '$answer1', 
-        '$answer2', 
-        '$answer3', 
-        '$answer4', 
-        '$answer5',
+        '$answers',
         '$pravila', 
         '$correctAnswer', 
         '$glava'
