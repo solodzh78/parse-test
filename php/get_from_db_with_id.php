@@ -19,7 +19,7 @@ $id=$_POST['id'];
 $gruppa=$_POST['gruppa'];
 
 // выполняем операции с базой данных
-$query = "SELECT * FROM $gruppa WHERE globalId IN ($id)";
+$query = "SELECT * FROM $gruppa WHERE globalId = $id";
 // $query = "INSERT INTO ".$gruppa."(
 //         id, 
 //         globalId, 

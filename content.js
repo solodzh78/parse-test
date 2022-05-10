@@ -1,5 +1,5 @@
 import { compareSrtings, uniq } from "./utils/functions.js";
-import { postData } from "./utils/post.js";
+import { postData, postDataJSON } from "./utils/post.js";
 import { options } from "./options.js"
 import { makeSelect } from "./utils/makeSelect.js";
 
@@ -8,7 +8,8 @@ const sendToSQL = async function (mass, gruppa) {
     mass.forEach(elem => {
         // преобразуем массив ответов в строку
         elem.answers = JSON.stringify(elem.answers);
-        postData('./php/databaseconnect.php', {...elem, gruppa})
+        // Отправка на серевер
+        postData('http://temp-bd.ru/php/loadData.php', {...elem, gruppa})
             .then(data => console.log(data));
     });
 }
@@ -104,24 +105,36 @@ const getContent = async function (data) {
         });
 }
 
+//Получение данных с сервера
+const getContentWithBilletNumber = async function (data) {
+    return postData('./php/getContent_with_billet_number.php', data)
+        .then(data => {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data;
+            document.getElementById('root').append(tempDiv);
+            const content = tempDiv.getElementsByClassName('col-sm-12 col-md-12 col-lg-12');
+            return content;
+        });
+}
+
 //Запуск при нажатии на кнопку
 const start = async function () {
     const select = document.getElementById('select').value;
     const dataSet = options[select].param;
-    const content = await getContent(dataSet);
+    // const content = await getContent(dataSet);
+    const content = await getContentWithBilletNumber({test: 743, billet: 7});
     const mass = fillArray(content);
     console.log('mass: ', mass);
     await addCorrectAnswer(mass, dataSet['test']);
     sendToSQL(mass, dataSet['gruppa']);
 }
 
-const check = function () {
-    postData('./php/get_from_db_with_id.php', { id: '185193', gruppa: 'h5' })
-        .then(data => data.json())
-        .then(card = console.log(data));
+const check = async function () {
+    const response = await postDataJSON('http://temp-bd.ru/php/getQuest.php', { id: 185246, gruppa: 'h5' });
+    const anwers = response.answers;
+    console.log('data: ', response.answers);
 };
 
-document.getElementById('inputs').append(makeSelect());
 document.getElementById('inputs').append(makeSelect());
 document.getElementById('btn').onclick = start;
 document.getElementById('btn-load').onclick = check;
